@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#a64c42">
+<title>九份の小さな旅</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f7e9dc;color:#49382f;font-family:system-ui,"Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif}
+.game{max-width:480px;min-height:100svh;margin:auto;background:#fff9f1;overflow:hidden;position:relative}
+header{background:#a64c42;color:#fff;text-align:center;padding:16px;font-weight:800;font-size:20px;letter-spacing:1px}
+.screen{display:none;padding:18px;animation:in .3s ease}
+.screen.active{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1,h2{text-align:center;color:#91483c}h1{font-size:27px}h2{font-size:22px}
+p{line-height:1.85}
+button{width:100%;min-height:54px;padding:14px;margin:7px 0;border:0;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer}
+button:active{transform:scale(.98)}
+.primary{background:#b65349;color:white}.secondary{background:#f2d7b8;color:#573d30}
+.option{background:#fff;border:2px solid #e4c6aa;text-align:left;color:#49382f}
+.option.correct{background:#d7efda;border-color:#55a46d}.option.wrong{background:#ffe0dc;border-color:#d26c64}
+button:disabled{opacity:.9}
+.scene{height:205px;border-radius:18px;background:linear-gradient(#a9d3db,#f7dbb2 68%,#c49b7d);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden}
+.scene:after{content:"";position:absolute;bottom:0;height:52px;width:100%;background:repeating-linear-gradient(90deg,#b78b70 0 34px,#a77860 35px 38px)}
+.art{font-size:70px;z-index:1;animation:float 3s ease-in-out infinite}
+.scene-title{z-index:1;background:#fff9;padding:6px 13px;border-radius:20px;font-weight:800}
+@keyframes float{50%{transform:translateY(-6px)}}
+.card{background:white;border-radius:18px;padding:16px;margin:15px 0;box-shadow:0 4px 15px #704a3018}
+.girl{display:flex;align-items:center;gap:11px;margin:14px 0}
+.avatar{width:68px;height:68px;flex-shrink:0;border-radius:50%;background:#f6d7bd;display:grid;place-items:center;font-size:43px;border:3px solid white;box-shadow:0 3px 9px #0002}
+.bubble{flex:1;background:#fff;border:2px solid #edcdb7;border-radius:15px;padding:12px;line-height:1.75}
+.stats{display:flex;justify-content:space-between;font-weight:700;font-size:14px}
+.progress{height:12px;background:#ead8c8;border-radius:20px;overflow:hidden;margin:11px 0}
+.fill{height:100%;width:0;background:#b65b4e;transition:width .4s}
+.stamps{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:13px 0}
+.stamp{background:#f1e4d5;border-radius:10px;text-align:center;padding:9px 2px;font-size:23px;opacity:.45;filter:grayscale(1)}
+.stamp.earned{opacity:1;filter:none;background:#ffe1b3}
+.word{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed #ddd;padding:10px 0}
+.word:last-child{border:0}.word span{color:#986c55;text-align:right}
+#feedback{display:none;background:#fff0d5;border-radius:12px;padding:13px;line-height:1.8;margin-top:12px;white-space:pre-line}
+footer{text-align:center;padding:18px;color:#927d70;font-size:12px}
+.confetti{position:absolute;top:0;font-size:24px;pointer-events:none;animation:fall 1.8s forwards;z-index:5}
+@keyframes fall{to{transform:translateY(420px) rotate(300deg);opacity:0}}
+</style>
+</head>
+<body>
+<div class="game" id="game">
+<header>🏮 九份の小さな旅 🏮</header>
+
+<section id="start" class="screen active">
+  <div class="scene"><div class="art">🏮🏘️🏮</div><div class="scene-title">台湾・九份へようこそ！</div></div>
+  <h1>九份の小さな旅</h1>
+  <p style="text-align:center">～さくらと一緒に思い出を集めよう～</p>
+  <div class="girl"><div class="avatar">👧🏻</div><div class="bubble">こんにちは！私はさくらです。今日は一緒に九份を探検しましょう！日本語のクイズにも挑戦してね！</div></div>
+  <div class="card" style="text-align:center">🗺️ 5つの観光スポット<br>📚 日本語の単語とクイズ<br>⭐ 最高得点：100点<br>🎖️ 思い出スタンプを集めよう！</div>
+  <button class="primary" onclick="startGame()">🌸 旅を始める</button>
+  <p style="text-align:center;font-size:12px;color:#88736b">音声機能はブラウザの対応状況によって異なります。</p>
+</section>
+
+<section id="travel" class="screen">
+  <div class="stats"><span id="placeCount"></span><span id="score"></span></div>
+  <div class="progress"><div id="bar" class="fill"></div></div>
+  <div id="stamps" class="stamps"></div>
+  <div class="scene"><div class="art" id="placeArt"></div><div class="scene-title" id="sceneTitle"></div></div>
+  <h2 id="placeName"></h2>
+  <div class="girl"><div class="avatar">👧🏻</div><div class="bubble" id="dialogue"></div></div>
+  <div class="card"><h3>📖 スポット紹介</h3><p id="description"></p><button class="secondary" onclick="speakDescription()">🔊 日本語を聞く</button></div>
+  <div class="card"><h3>📚 今日の単語</h3><div id="words"></div></div>
+  <button class="primary" onclick="showQuiz()">✨ クイズに挑戦する</button>
+</section>
+
+<section id="quiz" class="screen">
+  <div class="stats"><span id="quizCount"></span><span id="quizScore"></span></div>
+  <div class="progress"><div id="quizBar" class="fill"></div></div>
+  <div class="girl"><div class="avatar">👧🏻</div><div class="bubble">よく見て、正しい答えを選んでね！がんばって！</div></div>
+  <div class="card"><h2>🌟 日本語チャレンジ</h2><h3 id="question"></h3><div id="options"></div><div id="feedback" aria-live="polite"></div></div>
+  <button id="nextBtn" class="primary" onclick="nextPlace()" style="display:none">次のスポットへ ➜</button>
+</section>
+
+<section id="ending" class="screen">
+  <div class="scene"><div class="art">🎉🏮🌸</div><div class="scene-title">旅の思い出</div></div>
+  <h1>🎊 旅が終わりました！</h1>
+  <div class="girl"><div class="avatar">👧🏻</div><div class="bubble" id="endDialogue"></div></div>
+  <div class="card" style="text-align:center"><h2>あなたの成績</h2><div id="finalScore" style="font-size:43px;color:#b65349;font-weight:800"></div><p id="rank"></p><h3>🏅 集めたスタンプ</h3><div id="endStamps" class="stamps"></div></div>
+  <button class="primary" onclick="startGame()">🔄 もう一度遊ぶ</button>
+  <button class="secondary" onclick="showScreen('start')">🏠 タイトルへ戻る</button>
+</section>
+<footer>九份の小さな旅 | 日本語学習ゲーム</footer>
+</div>
+
+<script>
+const places=[
+{name:"九份老街（きゅうふんろうがい）",art:"🏮🍡🏮",title:"九份老街",dialogue:"わあ！にぎやかな通りですね！おいしそうな食べ物もたくさんあります！",description:"九份老街は台湾の新北市にあります。昔は金の採掘で栄えた町です。今は観光地として人気があります。狭い道にはお店や屋台が並んでいます。",words:[["観光地（かんこうち）","觀光景點"],["屋台（やたい）","攤販"],["にぎやか","熱鬧"]],question:"「屋台（やたい）」はどんな意味ですか？",options:["学校","露店・食べ物を売る店","駅"],answer:1,explanation:"「屋台」は道などで食べ物や商品を売る小さなお店です。"},
+{name:"昇平戲院（しょうへいげきいん）",art:"🎬🎞️🎟️",title:"昔の映画館",dialogue:"ここは昔の映画館です！昔の人たちはここで映画を楽しんでいたんですね！",description:"昇平戲院は九份にある歴史的な映画館です。九份がにぎやかだった時代、多くの人が映画や芝居を楽しみました。現在は昔の九份の雰囲気を感じられる場所です。",words:[["映画館（えいがかん）","電影院"],["歴史（れきし）","歷史"],["昔（むかし）","以前、過去"]],question:"昇平戲院は昔、どんな場所でしたか？",options:["映画を見る場所","魚を買う場所","電車に乗る場所"],answer:0,explanation:"昇平戲院は映画や芝居を楽しむ場所でした。"},
+{name:"阿妹茶樓（あめいちゃろう）",art:"🍵🏮🫖",title:"阿妹茶樓",dialogue:"いい香りがしますね！ここで台湾のお茶を飲んで、少し休みましょう！",description:"阿妹茶樓は九份の有名な茶芸館です。赤い提灯と伝統的な建物が印象的です。ここでは台湾のお茶を楽しみながら、九份の美しい景色を見ることができます。",words:[["お茶（おちゃ）","茶"],["提灯（ちょうちん）","燈籠"],["景色（けしき）","風景"]],question:"阿妹茶樓では何を楽しめますか？",options:["スキー","台湾のお茶","野球"],answer:1,explanation:"阿妹茶樓では台湾のお茶や美しい景色を楽しめます。"},
+{name:"豎崎路（しゅうきろ）",art:"🏮🪜🏮",title:"石段の道",dialogue:"長い階段ですね！赤い提灯がとてもきれいです。ゆっくり歩きましょう！",description:"豎崎路は九份を代表する石段の道です。階段の両側には茶芸館やお店があります。夕方になると赤い提灯が光り、幻想的な雰囲気になります。",words:[["階段（かいだん）","樓梯"],["夕方（ゆうがた）","傍晚"],["幻想的（げんそうてき）","夢幻的"]],question:"豎崎路で有名なものは何ですか？",options:["大きな空港","赤い提灯と石段","広い砂漠"],answer:1,explanation:"豎崎路は赤い提灯と石段の風景で有名です。"},
+{name:"九份觀景台（きゅうふんてんぼうだい）",art:"🌅🌊⛰️",title:"九份の展望スポット",dialogue:"やっと着きました！海と山が見えます！とてもすてきな景色ですね！",description:"九份の展望スポットからは、山や海、町の風景を眺めることができます。天気がよい日には遠くまで見渡せます。九份の旅の最後に、すてきな写真を撮りましょう。",words:[["展望台（てんぼうだい）","觀景台"],["海（うみ）","海"],["写真（しゃしん）","照片"]],question:"展望スポットから何が見えますか？",options:["雪山だけ","地下鉄だけ","山や海"],answer:2,explanation:"九份の展望スポットからは山や海の景色を眺められます。"}
+];
+
+let index=0,score=0,answered=false,stamps=[],audioCtx=null;
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");window.scrollTo(0,0)}
+function playSound(correct){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!audioCtx)audioCtx=new AC();if(audioCtx.state==="suspended")audioCtx.resume();const now=audioCtx.currentTime;(correct?[523,659,784]:[330,262]).forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=f;o.type="sine";let t=now+i*.13;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+.23)})}catch(e){}}
+function speak(text){if(!("speechSynthesis"in window)){alert("このブラウザは音声読み上げに対応していません。");return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";u.rate=.85;u.pitch=1.05;let v=speechSynthesis.getVoices().find(x=>x.lang.toLowerCase().startsWith("ja"));if(v)u.voice=v;speechSynthesis.speak(u)}
+function speakDescription(){speak(places[index].description)}
+function startGame(){index=0;score=0;answered=false;stamps=[];renderPlace()}
+function renderStamps(id){let c=document.getElementById(id);c.innerHTML="";["🏮","🎬","🍵","🪜","🌅"].forEach((icon,i)=>{let d=document.createElement("div");d.className="stamp"+(stamps.includes(i)?" earned":"");d.textContent=icon;c.appendChild(d)})}
+function renderPlace(){let p=places[index];document.getElementById("placeCount").textContent=`スポット ${index+1} / 5`;document.getElementById("score").textContent=`⭐ ${score}点`;document.getElementById("bar").style.width=`${index/5*100}%`;document.getElementById("placeArt").textContent=p.art;document.getElementById("sceneTitle").textContent=p.title;document.getElementById("placeName").textContent=p.name;document.getElementById("dialogue").textContent=p.dialogue;document.getElementById("description").textContent=p.description;let w=document.getElementById("words");w.innerHTML="";p.words.forEach(pair=>{let row=document.createElement("div");row.className="word";let a=document.createElement("strong"),b=document.createElement("span");a.textContent=pair[0];b.textContent=pair[1];row.append(a,b);w.appendChild(row)});renderStamps("stamps");showScreen("travel")}
+function showQuiz(){answered=false;let p=places[index];document.getElementById("quizCount").textContent=`クイズ ${index+1} / 5`;document.getElementById("quizScore").textContent=`⭐ ${score}点`;document.getElementById("quizBar").style.width=`${index/5*100}%`;document.getElementById("question").textContent=p.question;document.getElementById("feedback").style.display="none";document.getElementById("nextBtn").style.display="none";let box=document.getElementById("options");box.innerHTML="";p.options.forEach((s,i)=>{let b=document.createElement("button");b.className="option";b.textContent=`${i+1}. ${s}`;b.onclick=()=>checkAnswer(i);box.appendChild(b)});showScreen("quiz")}
+function checkAnswer(choice){if(answered)return;answered=true;let p=places[index],correct=choice===p.answer;document.querySelectorAll("#options button").forEach((b,i)=>{b.disabled=true;if(i===p.answer)b.classList.add("correct");if(i===choice&&!correct)b.classList.add("wrong")});if(correct)score+=20;if(!stamps.includes(index))stamps.push(index);playSound(correct);let f=document.getElementById("feedback");f.style.display="block";f.textContent=(correct?"🎉 正解！すばらしい！ +20点\n":"💪 おしい！次もがんばろう！\n")+p.explanation+"\n🏅 思い出スタンプをゲット！";document.getElementById("quizScore").textContent=`⭐ ${score}点`;document.getElementById("quizBar").style.width=`${(index+1)/5*100}%`;let n=document.getElementById("nextBtn");n.style.display="block";n.textContent=index===4?"🎊 旅の結果を見る":"次のスポットへ ➜";if(correct)confetti()}
+function nextPlace(){if(!answered)return;index++;if(index>=5)endGame();else renderPlace()}
+function endGame(){document.getElementById("finalScore").textContent=`${score} / 100点`;let rank,dialogue;if(score===100){rank="🏆 九份マスター！";dialogue="すごい！全問正解です！九份のことをよく知っていますね！"}else if(score>=60){rank="🌟 九份の旅名人！";dialogue="よくできました！楽しい旅でしたね！"}else{rank="🌱 九份の探検家！";dialogue="最後までがんばりましたね！また一緒に日本語を勉強しましょう！"}document.getElementById("rank").textContent=rank;document.getElementById("endDialogue").textContent=dialogue+" 一緒に旅をしてくれてありがとう！";renderStamps("endStamps");showScreen("ending");playSound(true);confetti()}
+function confetti(){let g=document.getElementById("game");["🌸","✨","⭐","🎊","💮"].forEach((s,i)=>{let e=document.createElement("span");e.className="confetti";e.textContent=s;e.style.left=(8+i*19)+"%";e.style.animationDelay=(i*.08)+"s";g.appendChild(e);setTimeout(()=>e.remove(),2100)})}
+</script>
+</body>
+</html>
